@@ -1,5 +1,5 @@
 :root {
-  --paper: #f6f7f3;
+  --paper: #f5f2eb;
   --surface: #ffffff;
   --ink: #171a18;
   --muted: #707773;
@@ -7,13 +7,13 @@
   --line-strong: #bbc2bb;
   --accent: #007d6b;
   --accent-soft: #ddf3ed;
-  --warm: #f0eee8;
+  --warm: #eeebe3;
   color-scheme: light;
 }
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-body { min-width: 320px; margin: 0; background: var(--paper); color: var(--ink); font-family: Manrope, Arial, sans-serif; }
+body { min-width: 320px; margin: 0; background: var(--paper); color: var(--ink); font-family: Sora, Arial, sans-serif; }
 button, input { font: inherit; }
 button { cursor: pointer; }
 .shell { width: min(1180px, calc(100% - 48px)); margin: 0 auto; }
