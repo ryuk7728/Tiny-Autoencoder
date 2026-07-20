@@ -1,13 +1,8 @@
 const imageInput = document.querySelector("#imageInput");
-const chooseImage = document.querySelector("#chooseImage");
-const uploadPanel = document.querySelector("#uploadPanel");
-const selectedFile = document.querySelector("#selectedFile");
-const fileName = document.querySelector("#fileName");
-const clearImage = document.querySelector("#clearImage");
 const reconstructButton = document.querySelector("#reconstructButton");
-const readyCopy = document.querySelector("#readyCopy");
 const resultMessage = document.querySelector("#resultMessage");
 const inputCard = document.querySelector("#inputCard");
+const inputCardStatus = document.querySelector("#inputCardStatus");
 const outputCard = document.querySelector("#outputCard");
 const encoderStage = document.querySelector("#encoderStage");
 const decoderStage = document.querySelector("#decoderStage");
@@ -75,33 +70,28 @@ function resetPipeline() {
   hideImage(reconstructedImage);
 }
 
-function setSelectedFile(file) {
+async function setSelectedFile(file) {
   selectedImage = file;
-  fileName.textContent = `${file.name} · ${(file.size / 1024 / 1024).toFixed(2)} MB`;
-  selectedFile.hidden = false;
-  reconstructButton.disabled = false;
-  readyCopy.className = "ready-copy is-ready";
-  readyCopy.lastChild.textContent = " Image selected · ready to resize";
-  resultMessage.className = "result-message";
-  resultMessage.textContent = "The image will be reduced to 32 × 32 before it enters the autoencoder.";
-  resetPipeline();
-}
-
-function resetUpload() {
-  if (processing) return;
-  selectedImage = null;
-  inputPreviewUrl = null;
-  imageInput.value = "";
-  selectedFile.hidden = true;
   reconstructButton.disabled = true;
-  readyCopy.className = "ready-copy";
-  readyCopy.lastChild.textContent = " Choose an image to begin";
-  resultMessage.className = "result-message";
-  resultMessage.textContent = "The model is trained on CIFAR-10, so it may make charmingly imperfect guesses for unusual images.";
   resetPipeline();
+  resultMessage.className = "result-message";
+  resultMessage.textContent = "Resizing the selected image to a 32 × 32 preview…";
+
+  try {
+    inputPreviewUrl = await create32PixelPreview(file);
+    showImage(inputImage, inputPreviewUrl);
+    inputCardStatus.textContent = "32 × 32 preview · click to replace";
+    reconstructButton.disabled = false;
+    resultMessage.textContent = "Image ready. Run the reconstruction when you are ready.";
+  } catch (error) {
+    selectedImage = null;
+    inputCardStatus.textContent = "click the card to upload";
+    resultMessage.className = "result-message error";
+    resultMessage.textContent = error.message;
+  }
 }
 
-function receiveFiles(files) {
+async function receiveFiles(files) {
   const [file] = files;
   if (!file || processing) return;
   if (!file.type.startsWith("image/")) {
@@ -114,27 +104,28 @@ function receiveFiles(files) {
     resultMessage.textContent = "That image is larger than 4 MB. Try a smaller upload.";
     return;
   }
-  setSelectedFile(file);
+  await setSelectedFile(file);
 }
 
 async function runReconstruction() {
   if (!selectedImage || processing) return;
   processing = true;
+  inputCard.disabled = true;
   reconstructButton.disabled = true;
-  clearImage.disabled = true;
   reconstructButton.firstElementChild.textContent = "Processing…";
-  readyCopy.className = "ready-copy is-processing";
-  readyCopy.lastChild.textContent = " The tiny image is moving through the model";
   resultMessage.className = "result-message";
+  outputCard.classList.remove("is-revealing");
+  latentVisual.classList.remove("is-filled");
+  setNetwork(encoderStage, "waiting", false);
+  setNetwork(decoderStage, "waiting", false);
+  hideImage(reconstructedImage);
 
   const form = new FormData();
   form.append("image", selectedImage);
   const request = fetch(apiEndpoint, { method: "POST", body: form });
 
   try {
-    resultMessage.textContent = "Resizing your upload to a 32 × 32 pixel image…";
-    inputPreviewUrl = await create32PixelPreview(selectedImage);
-    showImage(inputImage, inputPreviewUrl);
+    resultMessage.textContent = "Preparing the 32 × 32 image for the encoder…";
     inputCard.classList.add("is-preparing");
     await delay(1000);
     inputCard.classList.remove("is-preparing");
@@ -144,7 +135,7 @@ async function runReconstruction() {
     await delay(1600);
     setNetwork(encoderStage, "encoded", false);
 
-    resultMessage.textContent = "The 512-value latent space is now filled with the image's essential signal.";
+    resultMessage.textContent = "The 512-value latent space now holds the image's essential signal.";
     latentVisual.classList.add("is-filled");
     await delay(950);
 
@@ -161,7 +152,7 @@ async function runReconstruction() {
     showImage(reconstructedImage, payload.reconstruction);
     setNetwork(decoderStage, "decoded", false);
     outputCard.classList.add("is-revealing");
-    resultMessage.textContent = `Complete. ${payload.input_values.toLocaleString()} input values became ${payload.latent_values.toLocaleString()} latent values — a ${payload.compression_ratio}× smaller representation.`;
+    resultMessage.textContent = `Complete. ${payload.input_values.toLocaleString()} input values became ${payload.latent_values.toLocaleString()} latent values—a ${payload.compression_ratio}× smaller representation.`;
     await delay(900);
     outputCard.classList.remove("is-revealing");
   } catch (error) {
@@ -171,25 +162,26 @@ async function runReconstruction() {
     setNetwork(decoderStage, "waiting", false);
   } finally {
     processing = false;
-    clearImage.disabled = false;
+    inputCard.disabled = false;
     reconstructButton.disabled = !selectedImage;
     reconstructButton.firstElementChild.textContent = "Run reconstruction";
-    readyCopy.className = selectedImage ? "ready-copy is-ready" : "ready-copy";
-    readyCopy.lastChild.textContent = selectedImage ? " Ready for another reconstruction" : " Choose an image to begin";
   }
 }
 
-chooseImage.addEventListener("click", () => imageInput.click());
+inputCard.addEventListener("click", () => {
+  if (processing) return;
+  imageInput.value = "";
+  imageInput.click();
+});
 imageInput.addEventListener("change", (event) => receiveFiles(event.target.files));
-clearImage.addEventListener("click", resetUpload);
 reconstructButton.addEventListener("click", runReconstruction);
 
-["dragenter", "dragover"].forEach((eventName) => uploadPanel.addEventListener(eventName, (event) => {
+["dragenter", "dragover"].forEach((eventName) => inputCard.addEventListener(eventName, (event) => {
   event.preventDefault();
-  if (!processing) uploadPanel.classList.add("dragging");
+  if (!processing) inputCard.classList.add("dragging");
 }));
-["dragleave", "drop"].forEach((eventName) => uploadPanel.addEventListener(eventName, (event) => {
+["dragleave", "drop"].forEach((eventName) => inputCard.addEventListener(eventName, (event) => {
   event.preventDefault();
-  uploadPanel.classList.remove("dragging");
+  inputCard.classList.remove("dragging");
 }));
-uploadPanel.addEventListener("drop", (event) => receiveFiles(event.dataTransfer.files));
+inputCard.addEventListener("drop", (event) => receiveFiles(event.dataTransfer.files));

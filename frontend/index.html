@@ -5,18 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f6f7f3" />
     <meta name="description" content="A visual walkthrough of an image autoencoder." />
-    <title>Tiny Autoencoder experiment</title>
+    <title>Tiny Autoencoder</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=20260720.4" />
+    <link rel="stylesheet" href="styles.css?v=20260720.6" />
   </head>
   <body>
     <main class="shell">
       <section class="hero">
-        <p class="eyebrow">Visual walkthrough</p>
-        <h1>Tiny Autoencoder<br />experiment</h1>
-        <p class="intro">Give the model any image. It first reduces it to 32 × 32 pixels, compresses that tiny image into a compact code, then reconstructs it.</p>
+        <h1>Tiny Autoencoder</h1>
+        <p class="intro">Upload any image. The model first resizes it to 32 × 32 pixels, compresses its 3,072 RGB values into a 512-value latent code—a 6× smaller representation—and then reconstructs a new 32 × 32 image.</p>
       </section>
 
       <section class="overview" aria-label="The autoencoder process">
@@ -29,55 +28,35 @@
         <span class="flow-arrow" aria-hidden="true">→</span>
         <article class="flow-card compression-card">
           <span class="flow-number">02</span>
-          <div class="compression-mark" aria-hidden="true"><span>3,072</span><b>÷ 6</b><span>512</span></div>
-          <strong>6× compression</strong>
-          <small>512-value latent code</small>
+          <div class="scalar-code-icon" aria-hidden="true"><i></i><i></i><i></i><b>···</b><i></i></div>
+          <strong>512-value latent code — 6× smaller</strong>
         </article>
         <span class="flow-arrow" aria-hidden="true">→</span>
         <article class="flow-card">
           <span class="flow-number">03</span>
-          <div class="rebuild-icon" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
-          <strong>32 × 32 image</strong>
+          <div class="pixel-icon output-grid" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <strong>32 × 32 reconstruction</strong>
           <small>model reconstruction</small>
         </article>
       </section>
 
       <section class="demo" aria-labelledby="demo-title">
         <div class="section-top">
-          <div>
-            <p class="eyebrow">Try it</p>
-            <h2 id="demo-title">Upload an image.</h2>
-          </div>
-          <p>PNG, JPG or WebP · up to 4 MB</p>
+          <h2 id="demo-title">Upload an image.</h2>
         </div>
 
-        <div class="upload-panel" id="uploadPanel">
-          <input id="imageInput" type="file" accept="image/png,image/jpeg,image/webp" hidden />
-          <button class="dropzone" id="chooseImage" type="button">
-            <span class="upload-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0 4 4m-4-4L8 8M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" /></svg></span>
-            <span><strong>Choose an image</strong><small>or drop it here</small></span>
-            <span class="browse-label">Browse</span>
-          </button>
-          <div class="selected-file" id="selectedFile" hidden>
-            <span class="file-dot"></span><span id="fileName"></span><button id="clearImage" type="button" aria-label="Remove selected image">Remove</button>
-          </div>
-        </div>
-
-        <div class="action-bar">
-          <p class="ready-copy" id="readyCopy"><span></span> Choose an image to begin</p>
-          <button class="reconstruct-button" id="reconstructButton" type="button" disabled><span>Run reconstruction</span><b aria-hidden="true">→</b></button>
-        </div>
+        <input id="imageInput" type="file" accept="image/png,image/jpeg,image/webp" hidden />
 
         <div class="pipeline" id="pipeline" aria-live="polite">
-          <article class="image-card input-card" id="inputCard">
+          <button class="image-card input-card" id="inputCard" type="button" aria-label="Browse or drop an image for reconstruction">
             <div class="card-label"><span>01</span><strong>32 × 32 input</strong></div>
             <div class="image-frame">
               <img id="inputImage" alt="The 32 by 32 image sent to the encoder" />
-              <div class="empty-state" id="inputEmpty"><span>32</span><small>pixels land here</small></div>
+              <div class="empty-state upload-empty" id="inputEmpty"><span>↑</span><strong>Browse or drop an image</strong><small>resized automatically to 32 × 32</small></div>
               <div class="scan-line" aria-hidden="true"></div>
             </div>
-            <p>your upload, resized</p>
-          </article>
+            <p id="inputCardStatus">click the card to upload</p>
+          </button>
 
           <section class="neural-stage encoder-stage" id="encoderStage" aria-label="Encoder neural network">
             <div class="stage-label"><span>02</span><strong>Encoder</strong><small>finds patterns</small></div>
@@ -125,11 +104,15 @@
           </article>
         </div>
 
-        <p class="result-message" id="resultMessage">The model is trained on CIFAR-10, so it may make charmingly imperfect guesses for unusual images.</p>
+        <div class="reconstruction-action">
+          <button class="reconstruct-button" id="reconstructButton" type="button" disabled><span>Run reconstruction</span><b aria-hidden="true">→</b></button>
+        </div>
+
+        <p class="result-message" id="resultMessage">The model is trained on a limited dataset (CIFAR-10), so it may generate imperfect reconstructions for out-of-distribution images.</p>
       </section>
 
-      <footer><span>Input and output are both 32 × 32.</span><span>Image uploads are processed in memory and never saved.</span></footer>
+      <footer><span>Image uploads are processed in memory and never saved.</span></footer>
     </main>
-    <script src="app.js?v=20260720.4"></script>
+    <script src="app.js?v=20260720.6"></script>
   </body>
 </html>
