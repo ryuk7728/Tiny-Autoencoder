@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f6f7f3" />
+    <meta name="description" content="A visual walkthrough of an image autoencoder." />
+    <title>Tiny Autoencoder experiment</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css?v=20260720.2" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <p class="eyebrow">Visual walkthrough</p>
+        <h1>Tiny Autoencoder<br />experiment</h1>
+        <p class="intro">Give the model any image. It first reduces it to 32 × 32 pixels, compresses that tiny image into a compact code, then reconstructs it.</p>
+      </section>
+
+      <section class="overview" aria-label="The autoencoder process">
+        <article class="flow-card">
+          <span class="flow-number">01</span>
+          <div class="pixel-icon" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <strong>32 × 32 image</strong>
+          <small>3,072 RGB values</small>
+        </article>
+        <span class="flow-arrow" aria-hidden="true">→</span>
+        <article class="flow-card compression-card">
+          <span class="flow-number">02</span>
+          <div class="compression-mark" aria-hidden="true"><span>3,072</span><b>÷ 6</b><span>512</span></div>
+          <strong>6× compression</strong>
+          <small>512-value latent code</small>
+        </article>
+        <span class="flow-arrow" aria-hidden="true">→</span>
+        <article class="flow-card">
+          <span class="flow-number">03</span>
+          <div class="rebuild-icon" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+          <strong>32 × 32 image</strong>
+          <small>model reconstruction</small>
+        </article>
+      </section>
+
+      <section class="demo" aria-labelledby="demo-title">
+        <div class="section-top">
+          <div>
+            <p class="eyebrow">Try it</p>
+            <h2 id="demo-title">Upload an image.</h2>
+          </div>
+          <p>PNG, JPG or WebP · up to 4 MB</p>
+        </div>
+
+        <div class="upload-panel" id="uploadPanel">
+          <input id="imageInput" type="file" accept="image/png,image/jpeg,image/webp" hidden />
+          <button class="dropzone" id="chooseImage" type="button">
+            <span class="upload-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0 4 4m-4-4L8 8M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" /></svg></span>
+            <span><strong>Choose an image</strong><small>or drop it here</small></span>
+            <span class="browse-label">Browse</span>
+          </button>
+          <div class="selected-file" id="selectedFile" hidden>
+            <span class="file-dot"></span><span id="fileName"></span><button id="clearImage" type="button" aria-label="Remove selected image">Remove</button>
+          </div>
+        </div>
+
+        <div class="action-bar">
+          <p class="ready-copy" id="readyCopy"><span></span> Choose an image to begin</p>
+          <button class="reconstruct-button" id="reconstructButton" type="button" disabled><span>Run reconstruction</span><b aria-hidden="true">→</b></button>
+        </div>
+
+        <div class="pipeline" id="pipeline" aria-live="polite">
+          <article class="image-card input-card" id="inputCard">
+            <div class="card-label"><span>01</span><strong>32 × 32 input</strong></div>
+            <div class="image-frame">
+              <img id="inputImage" alt="The 32 by 32 image sent to the encoder" />
+              <div class="empty-state" id="inputEmpty"><span>32</span><small>pixels land here</small></div>
+              <div class="scan-line" aria-hidden="true"></div>
+            </div>
+            <p>your upload, resized</p>
+          </article>
+
+          <section class="neural-stage encoder-stage" id="encoderStage" aria-label="Encoder neural network">
+            <div class="stage-label"><span>02</span><strong>Encoder</strong><small>finds patterns</small></div>
+            <div class="network" aria-hidden="true">
+              <svg viewBox="0 0 172 124">
+                <g class="network-links"><path d="M16 25 61 37M16 25 61 62M16 62 61 37M16 62 61 62M16 62 61 87M16 99 61 62M16 99 61 87M61 37 111 49M61 62 111 49M61 62 111 75M61 87 111 75M111 49 156 62M111 75 156 62" /></g>
+                <g class="network-nodes"><circle cx="16" cy="25" r="6"/><circle cx="16" cy="62" r="6"/><circle cx="16" cy="99" r="6"/><circle cx="61" cy="37" r="6"/><circle cx="61" cy="62" r="6"/><circle cx="61" cy="87" r="6"/><circle cx="111" cy="49" r="6"/><circle cx="111" cy="75" r="6"/><circle cx="156" cy="62" r="7"/></g>
+                <g class="network-signal"><circle r="3"><animateMotion dur="1.1s" repeatCount="indefinite" path="M16 25 61 62 111 49 156 62" /></circle><circle r="3"><animateMotion dur="1.3s" begin="-.5s" repeatCount="indefinite" path="M16 99 61 62 111 75 156 62" /></circle></g>
+              </svg>
+            </div>
+            <p class="stage-status">waiting</p>
+          </section>
+
+          <article class="latent-card" id="latentCard">
+            <div class="card-label"><span>03</span><strong>Latent space</strong></div>
+            <div class="latent-visual" id="latentVisual" aria-hidden="true">
+              <i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i><i style="--i:4"></i><i style="--i:5"></i>
+              <i style="--i:6"></i><i style="--i:7"></i><i style="--i:8"></i><i style="--i:9"></i><i style="--i:10"></i><i style="--i:11"></i>
+              <i style="--i:12"></i><i style="--i:13"></i><i style="--i:14"></i><i style="--i:15"></i><i style="--i:16"></i><i style="--i:17"></i>
+              <i style="--i:18"></i><i style="--i:19"></i><i style="--i:20"></i><i style="--i:21"></i><i style="--i:22"></i><i style="--i:23"></i>
+            </div>
+            <p><strong>512 values</strong><span>6× smaller</span></p>
+          </article>
+
+          <section class="neural-stage decoder-stage" id="decoderStage" aria-label="Decoder neural network">
+            <div class="stage-label"><span>04</span><strong>Decoder</strong><small>rebuilds detail</small></div>
+            <div class="network mirror" aria-hidden="true">
+              <svg viewBox="0 0 172 124">
+                <g class="network-links"><path d="M16 62 61 49M16 62 61 75M61 49 111 37M61 49 111 62M61 75 111 62M61 75 111 87M111 37 156 25M111 37 156 62M111 62 156 25M111 62 156 62M111 62 156 99M111 87 156 62M111 87 156 99" /></g>
+                <g class="network-nodes"><circle cx="16" cy="62" r="7"/><circle cx="61" cy="49" r="6"/><circle cx="61" cy="75" r="6"/><circle cx="111" cy="37" r="6"/><circle cx="111" cy="62" r="6"/><circle cx="111" cy="87" r="6"/><circle cx="156" cy="25" r="6"/><circle cx="156" cy="62" r="6"/><circle cx="156" cy="99" r="6"/></g>
+                <g class="network-signal"><circle r="3"><animateMotion dur="1.1s" repeatCount="indefinite" path="M16 62 61 49 111 62 156 25" /></circle><circle r="3"><animateMotion dur="1.3s" begin="-.4s" repeatCount="indefinite" path="M16 62 61 75 111 62 156 99" /></circle></g>
+              </svg>
+            </div>
+            <p class="stage-status">waiting</p>
+          </section>
+
+          <article class="image-card output-card" id="outputCard">
+            <div class="card-label"><span>05</span><strong>Reconstruction</strong></div>
+            <div class="image-frame">
+              <img id="reconstructedImage" alt="The autoencoder's 32 by 32 reconstruction" />
+              <div class="empty-state" id="reconstructedEmpty"><span>✦</span><small>output appears here</small></div>
+              <div class="scan-line" aria-hidden="true"></div>
+            </div>
+            <p>the model's best guess</p>
+          </article>
+        </div>
+
+        <p class="result-message" id="resultMessage">The model is trained on CIFAR-10, so it may make charmingly imperfect guesses for unusual images.</p>
+      </section>
+
+      <footer><span>Input and output are both 32 × 32.</span><span>Image uploads are processed in memory and never saved.</span></footer>
+    </main>
+    <script src="app.js?v=20260720.2"></script>
+  </body>
+</html>
