@@ -3,28 +3,24 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 from backend.inference import ImageInputError, MAX_UPLOAD_BYTES, reconstruct
 
 
 logger = logging.getLogger(__name__)
-app = FastAPI(title="Neural Rebuild API", docs_url="/api/docs", openapi_url="/api/openapi.json")
+FRONTEND_DIR = Path(__file__).resolve().parents[1] / "frontend"
+app = FastAPI(title="Tiny Autoencoder API", docs_url="/api/docs", openapi_url="/api/openapi.json")
 app.add_middleware(
     CORSMiddleware,
     allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
-
-
-@app.get("/", include_in_schema=False)
-def frontend() -> RedirectResponse:
-    """Send the deployment root to the generated static frontend."""
-    return RedirectResponse(url="/index.html", status_code=307)
 
 
 @app.get("/api/health")
@@ -43,3 +39,7 @@ async def reconstruct_image(image: UploadFile = File(...)) -> dict[str, object]:
     except RuntimeError as error:
         logger.exception("Reconstruction model failed to load or run")
         raise HTTPException(status_code=503, detail="The reconstruction model is warming up. Try again shortly.") from error
+
+
+# Keep this mount last so the API routes above take precedence.
+app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")

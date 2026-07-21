@@ -1,13 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm run build",
-  "outputDirectory": "public",
-  "rewrites": [
-    {
-      "source": "/",
-      "destination": "/index.html"
-    }
-  ],
   "headers": [
     {
       "source": "/index.html",
@@ -24,7 +16,7 @@
   ],
   "functions": {
     "app.py": {
-      "includeFiles": "backend/models/**",
+      "includeFiles": "{backend/models/**,frontend/**}",
       "maxDuration": 60
     }
   }

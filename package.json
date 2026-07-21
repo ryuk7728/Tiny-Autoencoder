@@ -1,8 +1,0 @@
-{
-  "name": "autoencoder-reconstruction-web",
-  "private": true,
-  "scripts": {
-    "build": "node scripts/build-frontend.mjs"
-  }
-}
-
