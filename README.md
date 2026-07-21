@@ -1,18 +1,14 @@
-# Neural Rebuild
+# Tiny Autoencoder
 
-An interactive, full-stack demo of the trained CIFAR-10 latent-512 autoencoder. Upload an image, see the exact 32 × 32 RGB input, and compare it with the model's reconstruction.
+Tiny Autoencoder is an interactive, full-stack demo of a CIFAR-10 autoencoder. Upload any image to see it resized to 32 × 32, compressed from 3,072 RGB values into a 512-value latent code, a 6× smaller representation,and reconstructed as a new 32 × 32 image. The interface visualizes each stage of the encoder, latent space, and decoder while the model processes the image.
 
-The project keeps the user-facing layers separate:
+Since the model was trained on the limited CIFAR-10 dataset, out-of-distribution images may produce imperfect reconstructions.
 
-- `frontend/` — dependency-free static web app and processing animation.
-- `backend/` — image validation/preprocessing, ONNX model, and FastAPI routes.
-- `app.py` — small Vercel entrypoint that exposes the backend as one function.
+The project keeps the application layers separate:
 
-## What the 6× figure means
-
-Every upload is first converted to RGB and resized to 32 × 32. That is `32 × 32 × 3 = 3,072` numeric colour values. The encoder maps those to a 512-value latent vector, which is six times fewer values. The decoder turns that vector into a *new* 32 × 32 image.
-
-This is a learning demo, not a high-resolution image compressor or upscaler: original detail is discarded at resize time. Because the checkpoint was trained on CIFAR-10, images unlike small natural-object photos may reconstruct imperfectly.
+- `frontend/` — dependency-free static web interface and processing animations.
+- `backend/` — image validation, preprocessing, ONNX inference, and FastAPI routes.
+- `app.py` — entry point that exposes the FastAPI application.
 
 ## Run locally
 
@@ -31,25 +27,12 @@ In another terminal, serve the frontend:
 python -m http.server 5173 --directory frontend
 ```
 
-Open `http://localhost:5173`. The frontend automatically calls `http://127.0.0.1:8000/api/reconstruct` in local development and `/api/reconstruct` once deployed.
+Open `http://localhost:5173`. During local development, the frontend sends reconstruction requests to `http://127.0.0.1:8000/api/reconstruct`.
 
 ## Model export
 
-`backend/models/autoencoder_latent_512.onnx` is the production model. It is an ONNX export of the original `latent_512.pt` checkpoint, so production does not need to ship PyTorch. To regenerate it after retraining, install `torch` and `onnx`, then run:
+`backend/models/autoencoder_latent_512.onnx` is the inference model used by the API. It is an ONNX export of the original `latent_512.pt` checkpoint, so running the application does not require PyTorch. To regenerate it after retraining, install `torch` and `onnx`, then run:
 
 ```powershell
 python -m backend.export_model --checkpoint "..\Frontier-AI\04_AutoEncoder\outputs\models\latent_512.pt"
 ```
-
-## Deploy to Vercel
-
-The static frontend is built into `public/`; Vercel serves it from its CDN. `app.py` is detected as the FastAPI application and exposes the `/api/*` routes in the same deployment.
-
-```powershell
-npm install
-npx vercel
-npx vercel --prod
-```
-
-The deployment configuration explicitly includes the ONNX model for the Python function. The API accepts PNG, JPG, and WebP uploads up to 4 MB, processes them in memory, and does not write uploads to disk.
-
