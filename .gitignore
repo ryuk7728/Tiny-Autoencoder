@@ -7,3 +7,5 @@ public/
 backend/models/*.pt
 
 .python-version
+
+.vercel
