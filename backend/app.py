@@ -6,6 +6,7 @@ import logging
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 
 from backend.inference import ImageInputError, MAX_UPLOAD_BYTES, reconstruct
 
@@ -18,6 +19,12 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+
+
+@app.get("/", include_in_schema=False)
+def frontend() -> RedirectResponse:
+    """Send the deployment root to the generated static frontend."""
+    return RedirectResponse(url="/index.html", status_code=307)
 
 
 @app.get("/api/health")
@@ -36,4 +43,3 @@ async def reconstruct_image(image: UploadFile = File(...)) -> dict[str, object]:
     except RuntimeError as error:
         logger.exception("Reconstruction model failed to load or run")
         raise HTTPException(status_code=503, detail="The reconstruction model is warming up. Try again shortly.") from error
-
