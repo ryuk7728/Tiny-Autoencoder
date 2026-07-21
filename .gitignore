@@ -5,7 +5,3 @@ node_modules/
 public/
 .vercel/
 backend/models/*.pt
-
-.python-version
-
-.vercel
